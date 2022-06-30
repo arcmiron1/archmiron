@@ -15,7 +15,7 @@ function createNoise(w,h) {
 
 function startGame() {
     arch.start();
-    myGamePiece = new component(10, 10, "rgba(0, 0, 255, 1)", 1, 1);
+    myGamePiece = new component(20, 20, "rgba(255, 0, 0, 1)", 1, 1);
     console.log('shet');
     createNoise(260, 146);
     updateGameArea();;
@@ -47,6 +47,7 @@ function updateGameArea() {
     // arch.clear();
 
     // if (hello == false) {
+        myGamePiece.update();
         for (let i = 0; i < 260; i++) {
             
             // if not yet initialized
@@ -74,13 +75,13 @@ function updateGameArea() {
         if (myGamePiece.updated) console.log(myGamePiece.updated);
         const sx = Math.max(Math.floor(myGamePiece.x/5), 0);
         const sy = Math.max(Math.floor(myGamePiece.y/5), 0);
-        for (let i = 0; i < 5; i++) {
-            for (let j = 0; j < 5; j++) {
-            if (noise_com != undefined && noise_com[sx] != undefined && noise_com[sx][sy] != undefined)
-                noise_com[sx+i][sy+j].updated = true;
+        for (let i = 0; i <= 5; i++) {
+            for (let j = 0; j <= 5; j++) {
+            if (noise_com != undefined && noise_com[sx+i] != undefined && noise_com[sx+i][sy+j] != undefined)
+                noise_com[(sx+i)][sy+j].updated = true;
             }
         }
-        myGamePiece.update();
+        // myGamePiece.update();
         controller();
         arch._framerate = 0;
     } 
