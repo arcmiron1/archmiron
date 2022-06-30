@@ -45,7 +45,6 @@ onkeydown = onkeyup = function(e){
 }
 
 function controller() {
-    
     for (var key in mapKeys) {
         if (Object.hasOwnProperty.call(mapKeys, key)) {
             const value = mapKeys[key];
