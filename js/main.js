@@ -24,6 +24,7 @@ function updateGameArea() {
     console.log('updateGameArea');
     myGameArea.clear();
     myGamePiece.update();
+    controller();
 }
 
 function component(width, height, color, x, y) {
@@ -41,8 +42,6 @@ function component(width, height, color, x, y) {
 onkeydown = onkeyup = function(e){
     e = e || event;
     mapKeys[e.keyCode] = e.type == 'keydown';
-    controller();
-    console.log(mapKeys);
 }
 
 function controller() {
@@ -52,18 +51,27 @@ function controller() {
     //     }
     // }
 
-    if (myGameArea.movements.top.includes(event.keyCode)) {
-        myGamePiece.y -=1;
+    for (var key in mapKeys) {
+        if (Object.hasOwnProperty.call(mapKeys, key)) {
+            const value = mapKeys[key];
+            if (value == true) {
+                key = parseInt(key);
+                if (myGameArea.movements.top.includes(key)) {
+                    myGamePiece.y -=1;
+                }
+                if (myGameArea.movements.right.includes(key)) {
+                    myGamePiece.x +=1;
+                }
+                if (myGameArea.movements.bottom.includes(key)) {
+                    myGamePiece.y +=1;
+                }
+                if (myGameArea.movements.left.includes(key)) {
+                    myGamePiece.x -=1;
+                }
+            }
+        }
     }
-    if (myGameArea.movements.right.includes(event.keyCode)) {
-        myGamePiece.x +=1;
-    }
-    if (myGameArea.movements.bottom.includes(event.keyCode)) {
-        myGamePiece.y +=1;
-    }
-    if (myGameArea.movements.left.includes(event.keyCode)) {
-        myGamePiece.x -=1;
-    }
+
 }
 
 // document.addEventListener('keydown', function (event) {
