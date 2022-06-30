@@ -1,3 +1,5 @@
+var mapKeys = {};
+
 function startGame() {
     myGameArea.start();
     myGamePiece = new component(20, 20, "rgba(0, 0, 255, 0.5)", 1, 1);
@@ -21,7 +23,6 @@ var myGameArea = {
 function updateGameArea() {
     console.log('updateGameArea');
     myGameArea.clear();
-    // myGamePiece.x += 1;
     myGamePiece.update();
 }
 
@@ -37,16 +38,19 @@ function component(width, height, color, x, y) {
     }
 }
 
-function controller() {
-
+onkeydown = onkeyup = function(e){
+    e = e || event;
+    mapKeys[e.keyCode] = e.type == 'keydown';
+    controller();
+    console.log(mapKeys);
 }
 
-document.addEventListener('keydown', function (event) {
-    console.log(event);
-    // right = 39, 68
-    // down = 40, 83
-    // left = 37, 65
-    // top = 38, 87
+function controller() {
+    // for(i = 0; i < l; i ++){
+    //     if(mapKeys[i]){
+            
+    //     }
+    // }
 
     if (myGameArea.movements.top.includes(event.keyCode)) {
         myGamePiece.y -=1;
@@ -60,8 +64,17 @@ document.addEventListener('keydown', function (event) {
     if (myGameArea.movements.left.includes(event.keyCode)) {
         myGamePiece.x -=1;
     }
+}
 
-});
+// document.addEventListener('keydown', function (event) {
+    // console.log(event);
+    // right = 39, 68
+    // down = 40, 83
+    // left = 37, 65
+    // top = 38, 87
+
+
+// });
 
 
 startGame();
