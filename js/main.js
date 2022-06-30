@@ -14,7 +14,8 @@ var myGameArea = {
     },
     clear: function () {
         this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
-    }
+    },
+    movements: {'top' : [38, 87], 'right': [39, 68], 'bottom': [40, 83], 'left': [37, 65]}
 }
 
 function updateGameArea() {
@@ -42,6 +43,24 @@ function controller() {
 
 document.addEventListener('keydown', function (event) {
     console.log(event);
+    // right = 39, 68
+    // down = 40, 83
+    // left = 37, 65
+    // top = 38, 87
+
+    if (myGameArea.movements.top.includes(event.keyCode)) {
+        myGamePiece.y -=1;
+    }
+    if (myGameArea.movements.right.includes(event.keyCode)) {
+        myGamePiece.x +=1;
+    }
+    if (myGameArea.movements.bottom.includes(event.keyCode)) {
+        myGamePiece.y +=1;
+    }
+    if (myGameArea.movements.left.includes(event.keyCode)) {
+        myGamePiece.x -=1;
+    }
+
 });
 
 
