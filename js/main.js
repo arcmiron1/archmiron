@@ -36,8 +36,13 @@ function component(width, height, color, x, y) {
     }
 }
 
-function controller {
-    
+function controller() {
+
 }
+
+document.addEventListener('keydown', function (event) {
+    console.log(event);
+});
+
 
 startGame();
