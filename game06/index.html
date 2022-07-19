@@ -1,0 +1,80 @@
+<style>
+    body {
+        background-color: rgb(245, 239, 239);
+
+        background-repeat: no-repeat;
+
+    }
+
+    .minimap {
+        border: 1px solid #0000ff;
+
+        position: absolute !important;
+        top: 20px;
+        left: 20px;
+    }
+
+    #start {
+        font-family: Arial, Helvetica, sans-serif;
+        color: #ffffff;
+        padding: 20px;
+        position: fixed;
+        top: 35%;
+        left: 20%;
+        margin-top: -400px;
+        margin-left: -400px;
+        height: 1080;
+        width: 1920;
+
+        background-image: url("image/b.png");
+
+    }
+
+    #start a {
+        border: 3px solid #ffffff;
+        background-color: black;
+        text-decoration: none;
+        padding: 10px;
+        border-radius: 15px;
+        cursor: pointer;
+        display: block;
+        width: 200px;
+        margin: auto;
+        font-size: 2em;
+        display: inline-block;
+
+
+        text-align: center;
+
+    }
+
+
+    #start a:hover {
+        background-color: #f7ecec;
+        color: #1bafdb;
+    }
+</style>
+
+<body>
+    <div>
+
+
+        <canvas id="Game">
+
+        </canvas>
+
+        <div id="start">
+            <a href="#" onclick="startGame()">Start Game</a>
+            <canvas></canvas>
+
+        </div>
+        <canvas id="minimap" height="500" weight="500"> </canvas>
+
+
+
+        <script src=" ./collision.js"></script>
+        <script src="./classes.js"></script>
+
+        <script src="index.js"></script>
+        <script src=" ./minimap.js"></script>
+</body>
