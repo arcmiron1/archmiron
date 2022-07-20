@@ -1,0 +1,31 @@
+class Game {
+    constructor(canvas) {
+        /*
+            framerate
+            friction
+            scale
+            width
+        */
+
+    }
+    Start() {
+        
+    }
+}
+
+class GameObjectType {
+    
+}
+
+class GameObject {
+    constructor(width, height, data, x, y, type) {
+        switch (type) {
+            case 'image':
+                
+                break;
+        
+            default:
+                break;
+        }
+    }
+}

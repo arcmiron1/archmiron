@@ -1,0 +1,33 @@
+
+// neighbor['top']   = getNoiseValue(x, y-1);
+// neighbor['bot']   = getNoiseValue(x, y+1);
+// neighbor['left']  = getNoiseValue(x-1, y);
+// neighbor['right'] = getNoiseValue(x+1, y);
+
+// neighbor['topLeft'] = getNoiseValue(x-1, y-1);
+// neighbor['botLeft'] = getNoiseValue(x-1, y+1);
+
+// neighbor['topRight'] = getNoiseValue(x+1, y-1);
+// neighbor['botRight'] = getNoiseValue(x+1, y+1);
+
+
+/*
+old_tile = 32x32
+new_tile = 64x64
+
+32*2
+32*2
+
+64x64
+current_tile = (x % 2)
+
+for i = 1 to old_tile_w
+    for j = 1 to old_tile_y
+        x = i * 2
+        y = j * 2;
+        new_tile[x][y]     = old_tile[x][y];
+        new_tile[x+1][y]   = old_tile[x][y];
+        new_tile[x][y+1]   = old_tile[x][y];
+        new_tile[x+1][y+1] = old_tile[x][y];
+
+*/

@@ -1,0 +1,272 @@
+};
+
+var noise = [];
+var noise_com = [];
+
+var camera = {
+    x: 0, 
+    y: 0
+};
+
+var tile = {
+    wall: 0,
+    walkable: 1,
+}
+
+function createNoise(w,h) {
+    for (let i = 0; i < w; i++) {
+        noise[i] = [];
+        for (let j = 0; j < h; j++) {
+            // noise[i][j] = Math.round(Math.sin(i*Math.random()*10) * Math.cos(j*Math.random()*10));
+            // noise[i][j] = Math.cos(j) * Math.sin(i);
+            noise[i][j] = Math.sin(Math.random());
+
+            noise[i][j] = Math.round(noise[i][j]);
+            // noise[i][j] = Math.round(Math.random());//Math.round(Math.sin(i*Math.random()*10) * Math.cos(j*Math.random()*10));
+        }
+    }
+    // cellularAutomata();
+}
+
+function cellularAutomata(noiseLoop = 50, noiseThreshold = 4, noiseOpposite = 1, w=260, h=146, again = false) {
+    
+    var noiseLoop = 1;
+    var noiseThreshold = 4;
+    var noiseOpposite = 1;
+
+    var unbiasedX = [...Array(w).keys()];
+    var unbiasedY = [...Array(h).keys()];
+
+    unbiasedX = unbiasedX.map(value => ({ value, sort: Math.random() })).sort((a, b) => a.sort - b.sort).map(({ value }) => value)
+    unbiasedY = unbiasedY.map(value => ({ value, sort: Math.random() })).sort((a, b) => a.sort - b.sort).map(({ value }) => value)
+
+    var uX, uY;
+    
+    for (let p = 0; p < noiseLoop; p++) {
+        var currentTile = 0;
+        var neighbor = [];
+        var wallCounter = 0;
+        for (let x = 0; x < w; x++) { // width
+            for (let y = 0; y < h; y++) { // height
+
+                uX = unbiasedX[x];
+                uY = unbiasedY[y];
+
+                wallCounter = 0;
+                
+                currentTile = noise[uX][uY];
+
+                // if (currentTile == 0) continue;
+                if (currentTile == 0) wallCounter++;
+
+                neighbor[0]   = getNoiseValue(uX, uY-1);
+                neighbor[1]   = getNoiseValue(uX, uY+1);
+                neighbor[2]  = getNoiseValue(uX-1, uY);
+                neighbor[3] = getNoiseValue(uX+1, uY);
+                
+                neighbor[4] = getNoiseValue(uX-1, uY-1);
+                neighbor[5] = getNoiseValue(uX-1, uY+1);
+                
+                neighbor[6] = getNoiseValue(uX+1, uY-1);
+                neighbor[7] = getNoiseValue(uX+1, uY+1);
+                noiseThreshold = Math.ceil(neighbor.length / 2)
+
+
+                for (const n in neighbor) {
+                    // console.log('each neighbor: ', n);
+                    if (neighbor[n] == 0) wallCounter++;
+                }
+
+                
+                if (wallCounter > noiseThreshold) {
+                    noise[uX][uY] = Math.max(0, -noiseOpposite);
+                }else {
+                    noise[uX][uY] = Math.max(0, noiseOpposite);
+                }
+                // console.log(noise_com[x][y]);
+
+                const p_color = noise[uX][uY] * 255;
+
+                noise_com[uX][uY].color = "rgb(" + p_color + ', ' + p_color + ', ' + p_color + ")";
+                noise_com[uX][uY].updated = true;
+                noise_com[uX][uY].update();
+                
+                // console.log(neighbor);
+                // console.log('wallCounter: ', wallCounter);
+                // break;
+
+            } // break;
+        } 
+    }
+    // requestAnimationFrame(cellularAutomata);
+}
+
+function getNoiseValue(x,y) {
+    try { return noise[x][y] ?? 0; }
+    catch (error) { return 0; }
+}
+
+function startGame() {
+    arch.start();
+    myGamePiece = new component(20, 20, "rgba(255, 0, 0, 1)", 1, 1);
+    // console.log('shet');
+    if (noise.length == 0) createNoise(260, 146);
+    updateGameArea();;
+}
+
+var arch = {
+    change_occur: false,
+    scale: 5,
+    framerate: 1,
+    friction: 0.90,
+    canvas: document.getElementById("game"),
+    start: function () {
+        console.log(this.canvas.width, ', ', this.canvas.height);
+        this.canvas.width = 1300;
+        this.canvas.height = 1300 * 0.5625;
+        this.context = this.canvas.getContext("2d");
+        requestAnimationFrame(updateGameArea);
+    },
+    clear: function () {
+        this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    },
+    movements: {'top' : [38, 87], 'right': [39, 68], 'bottom': [40, 83], 'left': [37, 65]},
+    _framerate: 0
+}
+
+var hello = false;
+function updateGameArea() {
+    // console.log('updateGameArea');
+    // arch.clear();
+    
+    // if (hello == false) {
+        myGamePiece.update();
+        for (let i = 0; i < 260; i++) {
+            // console.log('updateGameArea');
+            
+            // if not yet initialized
+            if (!Array.isArray(noise_com[i])) noise_com[i] = [];
+
+            for (let j = 0; j < 146; j++) {
+                if (noise_com[i][j] == undefined) {
+                    // if not yet created, create it
+                    // const pixel = ;
+                    const p_color = (noise[i][j] * 255);
+                    noise_com[i][j] = new component(5, 5, "rgb(" + p_color + ', ' + p_color + ', ' + p_color + ")", i * 5, j*5);
+                    noise_com[i][j].updated = true;
+                    noise_com[i][j].update();
+                }else {
+                    // created but check if has been changed
+                    if (noise_com[i][j].updated) {
+                        noise_com[i][j].update();
+                        // console.log('updated');
+                    }
+                }
+            }
+        } hello = true;
+    // }
+
+    if (arch._framerate++ > arch.framerate) {
+        if (myGamePiece.updated) console.log(myGamePiece.updated);
+        const sx = Math.max(Math.floor(myGamePiece.x/5), 0);
+        const sy = Math.max(Math.floor(myGamePiece.y/5), 0);
+        for (let i = 0; i <= 5; i++) {
+            for (let j = 0; j <= 5; j++) {
+            if (noise_com != undefined && noise_com[sx+i] != undefined && noise_com[sx+i][sy+j] != undefined)
+                noise_com[(sx+i)][sy+j].updated = true;
+            }
+        }
+        // myGamePiece.update();
+        controller();
+        arch._framerate = 0;
+    } 
+    requestAnimationFrame(updateGameArea);
+}
+
+function component(width, height, color, x, y, type) {
+    this.type = type;
+    if (type == "image") {
+      this.image = new Image();
+      this.image.src = color;
+    }
+    this.width = width;
+    this.height = height;
+    this.x = x;
+    this.y = y;
+    this.vx = 0;
+    this.vy = 0;
+    this.oldx = x;
+    this.oldy = y;
+    this.color = color;
+    this.updated = false;
+    this.applyBoundary = function() {
+        this.x = Math.max(Math.min(this.x, arch.canvas.width - this.width), 0);
+        this.y = Math.max(Math.min(this.y, arch.canvas.height - this.height), 0);
+    };
+    this.update = function () {
+        if (this.updated) {
+            // console.log('updated');
+            this.applyBoundary();
+            ctx = arch.context;
+            ctx.fillStyle = this.color;
+            ctx.fillRect(this.x, this.y, this.width, this.height);
+            
+            this.oldx = this.x;
+            this.oldy = this.y;
+            this.updated = false;
+        }
+        
+        if (this.oldx != this.x || this.oldy != this.y) {
+            this.updated = true;
+        }else {
+            this.updated = false;
+        }
+
+    };
+}
+
+
+onkeydown = onkeyup = function(e){
+    e = e || event;
+    mapKeys[e.keyCode] = e.type == 'keydown';
+}
+
+function controller() {
+    for (var key in mapKeys) {
+        if (Object.hasOwnProperty.call(mapKeys, key)) {
+            const value = mapKeys[key];
+            if (value == true) {
+                key = parseInt(key);
+                if (arch.movements.top.includes(key)) {
+                    myGamePiece.vy -= 1 ;
+                }
+                if (arch.movements.right.includes(key)) {
+                    myGamePiece.vx += 1 ;
+                }
+                if (arch.movements.bottom.includes(key)) {
+                    myGamePiece.vy += 1 ;
+                }
+                if (arch.movements.left.includes(key)) {
+                    myGamePiece.vx -= 1 ;
+                }
+            }
+        }
+    }
+    myGamePiece.vx *= arch.friction;
+    myGamePiece.vy *= arch.friction;
+    myGamePiece.x += myGamePiece.vx;
+    myGamePiece.y += myGamePiece.vy;
+    myGamePiece.x = Math.round(myGamePiece.x);
+    myGamePiece.y = Math.round(myGamePiece.y);
+}
+
+// document.addEventListener('keydown', function (event) {
+    // console.log(event);
+    // right = 39, 68
+    // down = 40, 83
+    // left = 37, 65
+    // top = 38, 87
+// });
+
+
+startGame();

@@ -1,173 +1,670 @@
-var mapKeys = {};
+"use strict";
+class GameScene {
+    constructor(canvas, name = null) {
+        this.gameObjectPool = [];
+        this.name = 'Archmiron';
+        this.self = this;
+        this.isInitialized = false;
+        this.Loop = () => {
+            if (!this.isInitialized) {
+                this.createGameObjects();
+                this.isInitialized = true;
+            }
+            this.Logic();
+            this.Draw();
+            requestAnimationFrame(this.Loop);
+        };
+        if (canvas == null)
+            throw new Error('Canvas is undefined.');
+        this.canvas = canvas;
+        this.context = canvas.getContext('2d');
+        this.scale = 64;
+        this.framerate = 1;
+        this.friction = 0.9;
+        // additional options
+        // this.context.imageSmoothingEnabled = false;
+        // this.canvas.width = 1300;
+        // this.canvas.height = 1300 * 0.5625;
+        if (typeof name == 'string')
+            this.name = name;
+        if (this.context == null)
+            throw new Error('Canvas Context is undefined.');
+    }
+    ClearScene() {
+        this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    }
+    Draw() {
+        for (const gameobj of this.gameObjectPool) {
+            gameobj.Update();
+        }
+    }
+    Start() {
+        console.log(this.name);
+        this.Loop();
+    }
+    toString() { return this.name; }
+}
+// class Camera {
+// }
+var GameObjectType;
+(function (GameObjectType) {
+    GameObjectType[GameObjectType["image"] = 0] = "image";
+    GameObjectType[GameObjectType["color"] = 1] = "color";
+})(GameObjectType || (GameObjectType = {}));
+class GameObject {
+    constructor(context, width, height, data, x, y, type) {
+        this.translateX = 0;
+        this.translateY = 0;
+        this.isUpdated = false;
+        this.width = width;
+        this.height = height;
+        this.data = data;
+        this.x = x;
+        this.y = y;
+        this.type = type;
+        this.context = context;
+        this.AnalyzeType();
+    }
+    // getter & setter
+    get width() { return this._width; }
+    get height() { return this._height; }
+    get data() { return this._data; }
+    get x() { return this._x; }
+    get y() { return this._y; }
+    get vx() { var _a; return (_a = this._vx) !== null && _a !== void 0 ? _a : 0; }
+    get vy() { var _a; return (_a = this._vy) !== null && _a !== void 0 ? _a : 0; }
+    get type() { return this._type; }
+    // what is the use of setter? if data has been updated, then it will only update that specifc object, this is to avoid updating the whole canvas thus resulting to slower speed.
+    set width(value) { var _a; if (typeof this._width == 'undefined' || this._width != value) {
+        this.isUpdated = true;
+        this._old_width = (_a = this._width) !== null && _a !== void 0 ? _a : value;
+        this._width = value;
+    } }
+    set height(value) { var _a; if (typeof this._height == 'undefined' || this._height != value) {
+        this.isUpdated = true;
+        this._old_height = (_a = this._height) !== null && _a !== void 0 ? _a : value;
+        this._height = value;
+    } }
+    set data(value) { if (typeof this._data == 'undefined' || this._data != value) {
+        this.isUpdated = true;
+        this._data = value;
+    } }
+    set x(value) { var _a; if (typeof this._x == 'undefined' || this._x != value) {
+        this.isUpdated = true;
+        this._old_x = (_a = this.x) !== null && _a !== void 0 ? _a : value;
+        this._x = value;
+    } }
+    set y(value) { var _a; if (typeof this._y == 'undefined' || this._y != value) {
+        this.isUpdated = true;
+        this._old_y = (_a = this.y) !== null && _a !== void 0 ? _a : value;
+        this._y = value;
+    } }
+    set vx(value) { if (typeof this._vx == 'undefined' || this._vx != value) {
+        this.isUpdated = true;
+        this._vx = value;
+    } }
+    set vy(value) { if (typeof this._vy == 'undefined' || this._vy != value) {
+        this.isUpdated = true;
+        this._vy = value;
+    } }
+    set type(value) { if (typeof this._type == 'undefined' || this._type != value) {
+        this.isUpdated = true;
+        this._type = value;
+    } }
+    // The Player class has it own update so try to check that out first
+    Update(force = false) {
+        if (this.isUpdated == true || force == true) {
+            // this.context.clearRect(this._old_x + this.translateX+2, this._old_y + this.translateY+2, this._old_width-3, this._old_height-3);
+            this.context.clearRect(0, 0, this.context.canvas.width, this.context.canvas.height);
+            if (this.image != null) {
+                this.context.imageSmoothingEnabled = false;
+                this.context.drawImage(this.image, this.x + this.translateX, this.y + this.translateY, this.width, this.height);
+            }
+            else {
+                this.context.fillStyle = this.data;
+                this.context.fillRect(this.x + this.translateX, this.y + this.translateY, this.width, this.height);
+            }
+            this.isUpdated = false;
+        }
+    }
+    AnalyzeType() {
+        let self = this;
+        switch (this.type) {
+            case GameObjectType.image:
+                if (typeof this.data == 'string') {
+                    this.image = new Image();
+                    this.image.src = this.data;
+                }
+                else if (typeof this.data == 'object') {
+                    this.image = this.data;
+                }
+                // image takes time to load...
+                // it will be more appropriate to create a loading screen
+                this.image.onload = function () { self.isUpdated = true; };
+                break;
+            default:
+                break;
+        }
+    }
+    Collision(obj) {
+        // console.log(' ');
+        // console.log('this.x: ', this.x);
+        // console.log('obj.x: ', obj.x);
+        // console.log('this.width: ', this.width);
+        // console.log('obj.width: ', obj.width);
+        // console.log('this.y: ', this.y);
+        // console.log('obj.y: ', obj.y);
+        // console.log('this.height: ', this.height);
+        // console.log('obj.height: ', obj.height);
+        // console.log('this.x < obj.x + obj.width: ', this.x < obj.x + obj.width);
+        // console.log('this.x + this.width > obj.x: ', this.x + this.width > obj.x);
+        // console.log('this.y < obj.y + obj.height: ', this.y < obj.y + obj.height);
+        // console.log('this.y + this.height > obj.y: ', this.y + this.height > obj.y);
+        // this.data = 'green';
+        if (this.x < obj.x + obj.width &&
+            this.x + this.width > obj.x &&
+            this.y < obj.y + obj.height &&
+            this.y + this.height > obj.y) {
+            // this.data = 'green';
+            return true;
+        }
+        return false;
+    }
+    toString() {
+        return 'x: ' + Math.floor(this.x) + ', y: ' + Math.floor(this.y) + ', w: ' + Math.floor(this.width) + ', h: ' + Math.floor(this.height);
+    }
+    clone() {
+        return new GameObject(this.context, this.width, this.height, this.data, this.x, this.y, this.type);
+    }
+}
+class Player extends GameObject {
+    constructor(context, width, height, x, y) {
+        super(context, width, height, 'sprite/player.png', x, y, GameObjectType.image);
+        this.currentPosition = 'front';
+        this.currentFrame = 0;
+        this.frame = [];
+        this.movementFramerate = 0;
+        this.frame['front'] = [];
+        this.frame['front'].push([9, 12, 14, 19]);
+        this.frame['front'].push([41, 12, 14, 19]);
+        this.frame['front'].push([73, 12, 14, 19]);
+        this.frame['front'].push([105, 12, 14, 19]);
+        this.frame['right'] = [];
+        this.frame['right'].push([9, 44, 14, 19]);
+        this.frame['right'].push([41, 44, 14, 19]);
+        this.frame['right'].push([73, 44, 14, 19]);
+        this.frame['right'].push([105, 44, 14, 19]);
+        this.frame['back'] = [];
+        this.frame['back'].push([9, 76, 14, 19]);
+        this.frame['back'].push([41, 76, 14, 19]);
+        this.frame['back'].push([73, 76, 14, 19]);
+        this.frame['back'].push([105, 76, 14, 19]);
+        this.frame['left'] = [];
+        this.frame['left'].push([9, 108, 14, 19]);
+        this.frame['left'].push([41, 108, 14, 19]);
+        this.frame['left'].push([73, 108, 14, 19]);
+        this.frame['left'].push([105, 108, 14, 19]);
+    }
+    Update(force = false) {
+        if (this.isUpdated == true || force == true) {
+            if (this.image != null) {
+                // this.context.clearRect(this._old_x, this._old_y, this._old_width, this._old_height);
+                this.context.clearRect(((this.context.canvas.width / 2) - (this.width / 2)), ((this.context.canvas.height / 2) - (this.height / 2)), this._old_width, this._old_height);
+                // this.context.clearRect(((this.context.canvas.width / 2) - (this.width/2)), ((this.context.canvas.height / 2) - (this.height / 2)), this._old_width, this._old_height);
+                this.context.imageSmoothingEnabled = false;
+                // console.log(this.image, this.frame[this.currentPosition][this.currentFrame][0], this.frame[this.currentPosition][this.currentFrame][1], this.frame[this.currentPosition][this.currentFrame][2], this.frame[this.currentPosition][this.currentFrame][3], this.x, this.y, this.width, this.height);
+                // this.context.drawImage(this.image, this.frame[this.currentPosition][this.currentFrame][0], this.frame[this.currentPosition][this.currentFrame][1], this.frame[this.currentPosition][this.currentFrame][2], this.frame[this.currentPosition][this.currentFrame][3], ((this.context.canvas.width / 2) - (this.width/2)), ((this.context.canvas.height / 2) - (this.height / 2)), this.width, this.height);
+                this.context.drawImage(this.image, this.frame[this.currentPosition][this.currentFrame][0], this.frame[this.currentPosition][this.currentFrame][1], this.frame[this.currentPosition][this.currentFrame][2], this.frame[this.currentPosition][this.currentFrame][3], ((this.context.canvas.width / 2) - (this.width / 2)), ((this.context.canvas.height / 2) - (this.height / 2)), this.width, this.height);
+            }
+            this.isUpdated = false;
+        }
+    }
+    nextFrame() {
+        this.currentFrame = Math.ceil(this.movementFramerate / 10);
+        if (this.currentFrame == 3)
+            this.movementFramerate = 0;
+        else
+            this.movementFramerate++;
+        // if (this.currentFrame == 3) this.currentFrame = 0;
+        // else this.currentFrame++;
+    }
+    resetFrame() {
+        this.currentFrame = 0;
+    }
+}
+class MapScene extends GameScene {
+    constructor() {
+        super(...arguments);
+        this.noiseMap = [];
+        this.noiseMapObj = [];
+        this.camera = {
+            x: 0,
+            y: 0,
+            xC: 0,
+            yC: 0
+        };
+    }
+    adjustCamera(x, y) {
+        this.camera.x = (x - (x % this.scale)) / this.scale;
+        this.camera.y = (y - (y % this.scale)) / this.scale;
+        this.camera.x = (x / this.scale);
+        this.camera.y = (y / this.scale);
+        this.camera.xC = Math.floor(this.canvas.width / this.scale);
+        this.camera.yC = Math.floor(this.canvas.height / this.scale);
+        let x_sign = Math.floor(this.camera.x) - Math.floor((this.camera.xC / 2));
+        let y_sign = Math.floor(this.camera.y) - Math.floor((this.camera.yC / 2));
+        let xAdd = 0;
+        let yAdd = 0;
+        if (x_sign < 0)
+            xAdd = xAdd - x_sign;
+        if (y_sign < 0)
+            yAdd = yAdd - y_sign;
+        let x_final = Math.max(x_sign + xAdd, Math.floor(this.camera.x) + Math.floor(this.camera.xC / 2) + xAdd);
+        let y_final = Math.max(y_sign + yAdd, Math.floor(this.camera.y) + Math.floor(this.camera.yC / 2) + yAdd);
+        this.context.save();
+        let translateX = (this.camera.x * this.scale * -1) + ((this.context.canvas.width / 2));
+        let translateY = (this.camera.y * this.scale * -1) + ((this.context.canvas.height / 2));
+        // if (translateX > 0) {
+        //     this.context.clearRect(0,0,translateX, this.context.canvas.height);
+        // }
+        // if (translateY > 0) {
+        //     this.context.clearRect(0,0,this.context.canvas.width, translateY);
+        // }
+        // this.context.translate(translateX, translateY);
+        for (let i = Math.max(0, x_sign); i < (x_final + this.camera.xC); i++) {
+            for (let j = (Math.max(0, y_sign)); j < (y_final + this.camera.yC); j++) {
+                // this.noiseMapObj[i][j].translateX = -(this.camera.xC * this.scale);
+                // this.noiseMapObj[i][j].translateY = -(this.camera.yC * this.scale);
+                if (this.noiseMapObj[i] == undefined)
+                    continue;
+                if (this.noiseMapObj[i][j] == undefined)
+                    continue;
+                this.noiseMapObj[i][j].x -= 3;
+                this.noiseMapObj[i][j].isUpdated = true;
+                this.noiseMapObj[i][j].Update(true);
+            }
+        }
+        // this.context.restore();
+        // console.log((this.camera.x * this.scale * -1), (this.camera.y * this.scale * -1));
+        // console.log('x', this.camera.x);
+        // console.log('y', this.camera.y);
+        // console.log('xC', this.camera.xC);
+        // console.log('yC', this.camera.yC);
+        // console.log('x_sign', x_sign);
+        // console.log('y_sign', y_sign);
+        // console.log('x_final', x_final);
+        // console.log('y_final', y_final);
+        // console.log('xAdd', xAdd);
+        // console.log('yAdd', yAdd);
+        // console.log();
+        // console.log();
+        // console.log();
+        // console.log();
+        /*
 
-var noise = [];
-var noise_com = [];
+            if xsign < 0
+                added =
 
-function createNoise(w,h) {
-    for (let i = 0; i < w; i++) {
-        noise[i] = [];
-        for (let j = 0; j < h; j++) {
-            noise[i][j] = Math.round(Math.sin(i*Math.random()*10) * Math.cos(j*Math.random()*10));
+            xC / 2;
+            yC / 2;
+
+            X_signifacant
+            from x - (xC / 2)
+
+            Y_significant
+            from y - (yC / 2)
+
+            only draw when inside X_significant and Y_significant
+        */
+    }
+    createGameObjects() {
+        // var bg: GameObject = new GameObject(this.context, this.canvas.width, this.canvas.height, 'white', 0, 0, GameObjectType.color);
+        // this.gameObjectPool.push(bg);
+        // console.log(this.gameObjectPool.length);
+        // throw new Error("Method not implemented.");
+        this.generateNoise((1300 / 2), (1300 / 2) * 0.5625);
+        this.cellularAutomata();
+        // this.gameObjectPool.push()
+    }
+    Logic() {
+        // throw new Error("Method not implemented.");
+    }
+    generateNoise(w, h) {
+        for (let i = 0; i < w; i++) {
+            this.noiseMap[i] = [];
+            for (let j = 0; j < h; j++) {
+                // noiseMap[i][j] = Math.round(Math.sin(i*Math.random()*10) * Math.cos(j*Math.random()*10));
+                // noiseMap[i][j] = Math.cos(j) * Math.sin(i);
+                // let density = Math.round(Math.random()*10);
+                this.noiseMap[i][j] = Math.random();
+                this.noiseMap[i][j] = Math.round(this.noiseMap[i][j]);
+                // this.noiseMap[i][j] = (density < 8) ? 1 : 0;
+                // noiseMap[i][j] = Math.round(Math.random());//Math.round(Math.sin(i*Math.random()*10) * Math.cos(j*Math.random()*10));
+            }
+        }
+        return this.noiseMap;
+        // throw new Error("Method not implemented.");
+    }
+    cellularAutomata(noiseLoop = 50, noiseThreshold = 4, noiseOpposite = 1, again = false) {
+        var noiseLoop = 1;
+        var noiseThreshold = 4;
+        var noiseOpposite = 1;
+        var w = this.noiseMap.length, h = this.noiseMap[this.noiseMap.length - 1].length;
+        var unbiasedX = [...Array(w).keys()];
+        var unbiasedY = [...Array(h).keys()];
+        unbiasedX = unbiasedX.map(value => ({ value, sort: Math.random() })).sort((a, b) => a.sort - b.sort).map(({ value }) => value);
+        unbiasedY = unbiasedY.map(value => ({ value, sort: Math.random() })).sort((a, b) => a.sort - b.sort).map(({ value }) => value);
+        var uX, uY;
+        this.scale = 64;
+        for (let p = 0; p < noiseLoop; p++) {
+            var currentTile = 0;
+            var neighbor = [];
+            var wallCounter = 0;
+            for (let x = 0; x < w; x++) { // width
+                for (let y = 0; y < h; y++) { // height
+                    uX = unbiasedX[x];
+                    uY = unbiasedY[y];
+                    wallCounter = 0;
+                    currentTile = this.noiseMap[uX][uY];
+                    // if (currentTile == 0) continue;
+                    if (currentTile == 0)
+                        wallCounter++;
+                    neighbor[0] = this.getNoiseValue(uX, uY - 1);
+                    neighbor[1] = this.getNoiseValue(uX, uY + 1);
+                    neighbor[2] = this.getNoiseValue(uX - 1, uY);
+                    neighbor[3] = this.getNoiseValue(uX + 1, uY);
+                    neighbor[4] = this.getNoiseValue(uX - 1, uY - 1);
+                    neighbor[5] = this.getNoiseValue(uX - 1, uY + 1);
+                    neighbor[6] = this.getNoiseValue(uX + 1, uY - 1);
+                    neighbor[7] = this.getNoiseValue(uX + 1, uY + 1);
+                    noiseThreshold = Math.ceil(neighbor.length / 2);
+                    for (const n in neighbor) {
+                        // console.log('each neighbor: ', n);
+                        if (neighbor[n] == 0)
+                            wallCounter++;
+                    }
+                    if (wallCounter > noiseThreshold) {
+                        this.noiseMap[uX][uY] = Math.max(0, -noiseOpposite);
+                    }
+                    else {
+                        this.noiseMap[uX][uY] = Math.max(0, noiseOpposite);
+                    }
+                    // console.log(noise_com[x][y]);
+                    const p_color = this.noiseMap[uX][uY] * 255;
+                    if (this.noiseMapObj[uX] == undefined) {
+                        this.noiseMapObj[uX] = [];
+                    }
+                    if (this.noiseMapObj[uX][uY] == undefined) {
+                        this.noiseMapObj[uX][uY] = new GameObject(this.context, 1 * this.scale, 1 * this.scale, ((uX + uY) % 2 == 0) ? 'gray' : 'black', uX * this.scale, uY * this.scale, GameObjectType.color);
+                        // if (this.noiseMap[uX][uY] == 0) 
+                        this.gameObjectPool.push(this.noiseMapObj[uX][uY]);
+                        // console.log('hell');
+                    }
+                    this.noiseMapObj[uX][uY].data = "rgb(" + p_color + ', ' + p_color + ', ' + p_color + ")";
+                    this.noiseMapObj[uX][uY].Update(true);
+                    // console.log(neighbor);
+                    // console.log('wallCounter: ', wallCounter);
+                    // break;
+                } // break;
+            }
+        }
+        // requestAnimationFrame(cellularAutomata);
+    }
+    getNoiseValue(x, y) {
+        var _a;
+        try {
+            return (_a = this.noiseMap[x][y]) !== null && _a !== void 0 ? _a : 0;
+        }
+        catch (error) {
+            return 0;
         }
     }
 }
-
-
-function startGame() {
-    arch.start();
-    myGamePiece = new component(20, 20, "rgba(255, 0, 0, 1)", 1, 1);
-    console.log('shet');
-    createNoise(260, 146);
-    updateGameArea();;
-}
-
-var arch = {
-    change_occur: false,
-    scale: 5,
-    framerate: 1,
-    friction: 0.90,
-    canvas: document.getElementById("game"),
-    start: function () {
-        console.log(this.canvas.width, ', ', this.canvas.height);
-        this.canvas.width = 1300;
-        this.canvas.height = 1300 * 0.5625;
-        this.context = this.canvas.getContext("2d");
-        requestAnimationFrame(updateGameArea);
-    },
-    clear: function () {
-        this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
-    },
-    movements: {'top' : [38, 87], 'right': [39, 68], 'bottom': [40, 83], 'left': [37, 65]},
-    _framerate: 0
-}
-
-var hello = false;
-function updateGameArea() {
-    // console.log('updateGameArea');
-    // arch.clear();
-
-    // if (hello == false) {
-        myGamePiece.update();
-        for (let i = 0; i < 260; i++) {
-            
-            // if not yet initialized
-            if (!Array.isArray(noise_com[i])) noise_com[i] = [];
-
-            for (let j = 0; j < 146; j++) {
-                if (noise_com[i][j] == undefined) {
-                    // if not yet created, create it
-                    const p_color = (noise[i][j] * 255);
-                    const pixel = new component(5, 5, "rgb(" + p_color + ', ' + p_color + ', ' + p_color + ")", i * 5, j*5);
-                    noise_com[i][j] = pixel;
-                    pixel.updated = true;
-                    pixel.update();
-                }else {
-                    // created but check if has been changed
-                    if (noise_com[i][j].updated) {
-                        noise_com[i][j].update();
+class PlayerScene extends GameScene {
+    constructor() {
+        super(...arguments);
+        this.starMovement = {
+            top: [38, 87],
+            right: [39, 68],
+            bottom: [40, 83],
+            left: [37, 65],
+        };
+    }
+    bindInput(keyMaps) { this.keyMaps = keyMaps; }
+    bindMap(backgroundMap) { this.backgroundMap = backgroundMap; }
+    createGameObjects() {
+        var w = 64;
+        this.player = new Player(this.context, w, w, ((this.context.canvas.width / 2) - (w)), ((this.context.canvas.height / 2) - (w)));
+        this.gameObjectPool.push(this.player);
+        // throw new Error("Method not implemented.");
+    }
+    Logic() {
+        if (this.Movements()) {
+            if (this.backgroundMap != undefined) {
+                // let nx = Math.floor(this.player.x / this.scale),ny = Math.floor(this.player.y / this.scale);
+                // if (this.backgroundMap.noiseMapObj[nx] != undefined && this.backgroundMap.noiseMapObj[nx][ny])
+                //     this.backgroundMap.noiseMapObj[nx][ny].Collision(this.player);
+                // this.backgroundMap.noiseMapObj[nx-1][ny].Collision(this.player);
+                // this.player.Collision(this.backgroundMap.noiseMapObj[nx][ny]);
+                // this.backgroundMap.adjustCamera(this.player.x, this.player.y);
+            }
+        }
+        // throw new Error("Method not implemented.");
+    }
+    Movements() {
+        let isMove = false;
+        let movementSpeed = 1.5;
+        this.friction = 0.8;
+        let movementDown = {
+            top: false,
+            left: false,
+            right: false,
+            bottom: false
+        };
+        let movementCross = {
+            topLeft: false,
+            topRight: false,
+            bottomLeft: false,
+            bottomRight: false
+        };
+        for (var key in this.keyMaps) {
+            if (Object.hasOwnProperty.call(this.keyMaps, key)) {
+                const value = this.keyMaps[key];
+                if (value == true) {
+                    let keyNum = parseInt(key);
+                    if (this.starMovement.top.includes(keyNum)) {
+                        movementDown.top = true;
+                    }
+                    if (this.starMovement.right.includes(keyNum)) {
+                        movementDown.right = true;
+                    }
+                    if (this.starMovement.bottom.includes(keyNum)) {
+                        movementDown.bottom = true;
+                    }
+                    if (this.starMovement.left.includes(keyNum)) {
+                        movementDown.left = true;
                     }
                 }
             }
-        } hello = true;
-    // }
-
-    if (arch._framerate++ > arch.framerate) {
-        if (myGamePiece.updated) console.log(myGamePiece.updated);
-        const sx = Math.max(Math.floor(myGamePiece.x/5), 0);
-        const sy = Math.max(Math.floor(myGamePiece.y/5), 0);
-        for (let i = 0; i <= 5; i++) {
-            for (let j = 0; j <= 5; j++) {
-            if (noise_com != undefined && noise_com[sx+i] != undefined && noise_com[sx+i][sy+j] != undefined)
-                noise_com[(sx+i)][sy+j].updated = true;
+        }
+        movementCross.topLeft = (movementDown.top && movementDown.left);
+        movementCross.topRight = (movementDown.top && movementDown.right);
+        movementCross.bottomLeft = (movementDown.bottom && movementDown.left);
+        movementCross.bottomRight = (movementDown.bottom && movementDown.right);
+        isMove = true;
+        switch (true) {
+            case movementCross.topLeft:
+                this.player.vx -= movementSpeed * .7;
+                this.player.vy -= movementSpeed * .7;
+                this.player.currentPosition = 'left';
+                break;
+            case movementCross.topRight:
+                this.player.vx += movementSpeed * .7;
+                this.player.vy -= movementSpeed * .7;
+                this.player.currentPosition = 'right';
+                break;
+            case movementCross.bottomLeft:
+                this.player.vx -= movementSpeed * .7;
+                this.player.vy += movementSpeed * .7;
+                this.player.currentPosition = 'left';
+                break;
+            case movementCross.bottomRight:
+                this.player.vx += movementSpeed * .7;
+                this.player.vy += movementSpeed * .7;
+                this.player.currentPosition = 'right';
+                break;
+            case movementDown.top:
+                this.player.vy -= movementSpeed;
+                this.player.currentPosition = 'back';
+                break;
+            case movementDown.right:
+                this.player.vx += movementSpeed;
+                this.player.currentPosition = 'right';
+                break;
+            case movementDown.left:
+                this.player.vx -= movementSpeed;
+                this.player.currentPosition = 'left';
+                break;
+            case movementDown.bottom:
+                this.player.vy += movementSpeed;
+                this.player.currentPosition = 'front';
+                break;
+            default:
+                isMove = false;
+                break;
+        }
+        this.player.vx *= this.friction;
+        this.player.vy *= this.friction;
+        this.backgroundMap.camera.x = (this.player.x - (this.player.x % this.backgroundMap.scale)) / this.backgroundMap.scale;
+        this.backgroundMap.camera.y = (this.player.y - (this.player.y % this.backgroundMap.scale)) / this.backgroundMap.scale;
+        this.backgroundMap.camera.x = (this.player.x / this.backgroundMap.scale);
+        this.backgroundMap.camera.y = (this.player.y / this.backgroundMap.scale);
+        this.backgroundMap.camera.xC = Math.floor(this.backgroundMap.canvas.width / this.backgroundMap.scale);
+        this.backgroundMap.camera.yC = Math.floor(this.backgroundMap.canvas.height / this.backgroundMap.scale);
+        let x_sign = Math.floor(this.backgroundMap.camera.x) - Math.floor((this.backgroundMap.camera.xC / 2));
+        let y_sign = Math.floor(this.backgroundMap.camera.y) - Math.floor((this.backgroundMap.camera.yC / 2));
+        let xAdd = 0;
+        let yAdd = 0;
+        if (x_sign < 0)
+            xAdd = xAdd - x_sign;
+        if (y_sign < 0)
+            yAdd = yAdd - y_sign;
+        let x_final = Math.max(x_sign + xAdd, Math.floor(this.backgroundMap.camera.x) + Math.floor(this.backgroundMap.camera.xC / 2) + xAdd);
+        let y_final = Math.max(y_sign + yAdd, Math.floor(this.backgroundMap.camera.y) + Math.floor(this.backgroundMap.camera.yC / 2) + yAdd);
+        // let translateX = (this.backgroundMap.camera.x * this.scale * -1) + ((this.context.canvas.width / 2));
+        // let translateY = (this.backgroundMap.camera.y * this.scale * -1) + ((this.context.canvas.height / 2));
+        // if (translateX > 0) {
+        //     this.context.clearRect(0,0,translateX, this.context.canvas.height);
+        // }
+        // if (this.backgroundMap.camera.x < 0) {
+        //     this.backgroundMap.context.clearRect(0,0, Math.floor(this.backgroundMap.camera.x * this.backgroundMap.scale * -1), this.backgroundMap.context.canvas.height);
+        //     // console.log(Math.floor(this.backgroundMap.camera.x * this.backgroundMap.scale * -1));
+        // }
+        // if (this.backgroundMap.camera.y < 0) {
+        //     this.backgroundMap.context.clearRect(0, 0, this.backgroundMap.context.canvas.width, Math.floor(this.backgroundMap.camera.y * this.backgroundMap.scale * -1));
+        //     // console.log(Math.floor(this.backgroundMap.camera.y * this.backgroundMap.scale * -1));
+        //     // console.log(0, 0, this.context.canvas.width, Math.floor(this.backgroundMap.camera.y * this.backgroundMap.scale * -1));
+        // }
+        let stopper = false;
+        this.backgroundMap.gameObjectPool.forEach((value) => {
+            // value.x -= this.player.vx;
+            // value.y -= this.player.vy;
+            value.x -= this.player.vx;
+            value.y -= this.player.vy;
+            value.isUpdated = false;
+            // let clonePlayer = this.player.clone();
+            if ((value.x >= (0 - value.width) &&
+                value.x <= this.canvas.width &&
+                value.y >= (0 - value.height) &&
+                value.y <= this.canvas.height)) {
+                if (this.player.Collision(value)
+                    // value.Collision(this.player)
+                    && value.data == "rgb(0, 0, 0)") {
+                    // if (this.lastCollision != value) {
+                    // value.data = 'green';
+                    value.x += this.player.vx;
+                    value.y += this.player.vy;
+                    this.player.vx = 0;
+                    this.player.vy = 0;
+                    // value.isUpdated = false;
+                    // console.log('Collision Player with: ', value.x, ', ', value.y, ': ', value.data);
+                    // }
+                    // this.lastCollision = value;
+                }
+                value.Update(true);
+                // console.log('');
+                // console.log('Player: ', "\n", this.player.toString(), "\n", 'Other: ', "\n", value.toString());
+                // console.log('Other: ', value.toString());    
             }
-        }
-        // myGamePiece.update();
-        controller();
-        arch._framerate = 0;
-    } 
-    requestAnimationFrame(updateGameArea);
-}
-
-function component(width, height, color, x, y) {
-    this.width = width;
-    this.height = height;
-    this.x = x;
-    this.y = y;
-    this.vx = 0;
-    this.vy = 0;
-    this.oldx = x;
-    this.oldy = y;
-    this.updated = false;
-    this.applyBoundary = function() {
-        this.x = Math.max(Math.min(this.x, arch.canvas.width - this.width), 0);
-        this.y = Math.max(Math.min(this.y, arch.canvas.height - this.height), 0);
-    };
-    this.update = function () {
-        if (this.updated) {
-            // console.log('updated');
-            this.applyBoundary();
-            ctx = arch.context;
-            ctx.fillStyle = color;
-            ctx.fillRect(this.x, this.y, this.width, this.height);
-            
-            this.oldx = this.x;
-            this.oldy = this.y;
-            this.updated = false;
-        }
-        
-        if (this.oldx != this.x || this.oldy != this.y) {
-            this.updated = true;
-        }else {
-            this.updated = false;
-        }
-
-    };
-}
-
-
-onkeydown = onkeyup = function(e){
-    e = e || event;
-    mapKeys[e.keyCode] = e.type == 'keydown';
-}
-
-function controller() {
-    for (var key in mapKeys) {
-        if (Object.hasOwnProperty.call(mapKeys, key)) {
-            const value = mapKeys[key];
-            if (value == true) {
-                key = parseInt(key);
-                if (arch.movements.top.includes(key)) {
-                    myGamePiece.vy -= 1 ;
-                }
-                if (arch.movements.right.includes(key)) {
-                    myGamePiece.vx += 1 ;
-                }
-                if (arch.movements.bottom.includes(key)) {
-                    myGamePiece.vy += 1 ;
-                }
-                if (arch.movements.left.includes(key)) {
-                    myGamePiece.vx -= 1 ;
+            else {
+                value.isUpdated = false;
+            }
+        });
+        // this.player.x += this.player.vx;
+        // this.player.y += this.player.vy;
+        // for (let i = Math.max(0, x_sign); i < (x_final + this.backgroundMap.camera.xC); i++) {
+        //     for (let j = (Math.max(0, y_sign)); j < (y_final + this.backgroundMap.camera.yC); j++) {
+        //         if (this.backgroundMap.noiseMapObj[i] == undefined) continue;
+        //         if (this.backgroundMap.noiseMapObj[i][j] == undefined) continue;
+        //         // this.backgroundMap.noiseMapObj[i][j].x -= this.player.vx;
+        //         // this.backgroundMap.noiseMapObj[i][j].y -= this.player.vy;
+        //         this.backgroundMap.noiseMapObj[i][j].isUpdated = true;
+        //         this.backgroundMap.noiseMapObj[i][j].Update(true);
+        //     }
+        // }
+        /*
+            this.context.save();
+            let translateX = (this.backgroundMap.camera.x * this.scale * -1) + ((this.context.canvas.width / 2));
+            let translateY = (this.backgroundMap.camera.y * this.scale * -1) + ((this.context.canvas.height / 2));
+    
+            // if (translateX > 0) {
+            //     this.context.clearRect(0,0,translateX, this.context.canvas.height);
+            // }
+            // if (translateY > 0) {
+            //     this.context.clearRect(0,0,this.context.canvas.width, translateY);
+            // }
+    
+            // this.context.translate(translateX, translateY);
+            for (let i = Math.max(0, x_sign); i < (x_final + this.camera.xC); i++) {
+                for (let j = (Math.max(0, y_sign)); j < (y_final + this.camera.yC); j++) {
+                    // this.noiseMapObj[i][j].translateX = -(this.camera.xC * this.scale);
+                    // this.noiseMapObj[i][j].translateY = -(this.camera.yC * this.scale);
+                    if (this.noiseMapObj[i] == undefined) continue;
+                    if (this.noiseMapObj[i][j] == undefined) continue;
+                    this.noiseMapObj[i][j].x -=3;
+                    this.noiseMapObj[i][j].isUpdated = true;
+                    this.noiseMapObj[i][j].Update(true);
+    
                 }
             }
+        */
+        // let nx = Math.floor(this.player.x / this.scale),ny = Math.floor(this.player.y / this.scale);
+        // if (this.backgroundMap.noiseMapObj[nx-1] != undefined && this.backgroundMap.noiseMapObj[nx-1][ny]) {
+        //     // this.backgroundMap.noiseMapObj[nx-1][ny].Collision(this.player);
+        //     if (this.backgroundMap.noiseMap[nx][ny] == 0) {
+        //         this.player.x = Math.max(this.player.x, Math.ceil(this.backgroundMap.noiseMapObj[nx][ny].x + (this.backgroundMap.noiseMapObj[nx][ny].width)));
+        //         this.player.y = Math.max(this.player.y, Math.ceil(this.backgroundMap.noiseMapObj[nx][ny].y + (this.backgroundMap.noiseMapObj[nx][ny].height) ));
+        //         // this.player.x = Math.min(this.player.x, Math.ceil(this.backgroundMap.noiseMapObj[nx][ny].x + (this.backgroundMap.noiseMapObj[nx][ny].width) ));
+        //         // this.player.y = Math.min(this.player.y, Math.ceil(this.backgroundMap.noiseMapObj[nx][ny].y + (this.backgroundMap.noiseMapObj[nx][ny].height)));
+        //     }
+        // }
+        // this.player.isUpdated = false;
+        // isMove = false;
+        if (!isMove) {
+            this.player.resetFrame();
+            this.player.Update(true);
         }
+        else {
+            this.player.nextFrame();
+        }
+        return isMove;
     }
-    myGamePiece.vx *= arch.friction;
-    myGamePiece.vy *= arch.friction;
-    myGamePiece.x += myGamePiece.vx;
-    myGamePiece.y += myGamePiece.vy;
-    myGamePiece.x = Math.round(myGamePiece.x);
-    myGamePiece.y = Math.round(myGamePiece.y);
 }
-
-// document.addEventListener('keydown', function (event) {
-    // console.log(event);
-    // right = 39, 68
-    // down = 40, 83
-    // left = 37, 65
-    // top = 38, 87
-
-
-// });
-
-
-startGame();
+class NormalScene extends GameScene {
+    createGameObjects() {
+        // throw new Error("Method not implemented.");
+    }
+    Logic() {
+        // throw new Error("Method not implemented.");
+    }
+}

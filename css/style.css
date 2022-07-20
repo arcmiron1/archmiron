@@ -26,7 +26,7 @@ body {
     background-color: #050505;
 }
 
-#game {
+#game, #gameUI, #gameBG {
     position: absolute;
     width: 100%;
     height: 100%;
@@ -34,6 +34,10 @@ body {
     left:0;
     right:0;
     bottom:0;
-    background-color: #666;
+    /* background-color: #666; */
     image-rendering: pixelated;
 }
+
+#gameBG { z-index: 1; }
+#game { z-index: 2; }
+#gameUI { z-index: 3; }
