@@ -1,0 +1,53 @@
+* {
+    box-sizing: border-box;
+    margin: 0 auto;
+    padding: 0;
+}
+
+ul, ol { list-style-type: none; }
+
+body {
+    /* background-color: #000; */
+    background: url(../image/bg.png);
+}
+
+.container {
+    padding: 10px;
+    width: 1300px;
+    margin: auto;
+}
+
+.scene {
+    position: relative;
+    width: 100%;
+    height: 0;
+    padding-bottom: 56.25%;
+    border: 3px solid #333;
+    border-radius: 5px;
+    background-color: #141414;
+}
+/* background-color: #ababab; */
+
+#game, #gameUI, #gameBG {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top:0;
+    left:0;
+    right:0;
+    bottom:0;
+    /* background-color: #666; */
+    image-rendering: pixelated;
+}
+
+#gameBG, #gameMap { z-index: 1; }
+#game, #gameGrid { z-index: 2; }
+#gameUI, #gameCollision { z-index: 3; }
+
+#gameMap, #gameCollision, #gameGrid {
+    position: absolute;
+    left: 0;
+    top: 0;
+    height: 100%;
+    image-rendering: pixelated;
+}

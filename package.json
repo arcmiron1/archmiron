@@ -1,0 +1,25 @@
+{
+  "dependencies": {
+    "fs": "0.0.1-security",
+    "sharp": "^0.30.7",
+    "typescript": "^4.7.4"
+  },
+  "name": "archmiron",
+  "version": "1.0.0",
+  "main": "index.js",
+  "devDependencies": {},
+  "scripts": {
+    "start": "tsc --watch"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/arcmiron1/archmiron.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/arcmiron1/archmiron/issues"
+  },
+  "homepage": "https://github.com/arcmiron1/archmiron#readme",
+  "description": ""
+}
