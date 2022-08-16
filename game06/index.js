@@ -64,7 +64,7 @@ const playerLeftImage = new Image();
 playerLeftImage.src ='./image/characterwalkleft.png';
 
 const playerUpImage = new Image();
-playerUpImage.src ='./image/characterd5.png';
+playerUpImage.src ='./image/backview.png';
 
 const playerImage = new Image();
 playerImage.src ='./image/character01.png';
