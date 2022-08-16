@@ -46,13 +46,13 @@ if(offset == collisionMap){
 
 
 const image = new Image();
-image.src = './image/town.png';
+image.src = './image/town4.png';
 
 const image1 = new Image();
 image1.src = './image/b.png';
 
 const foregroundImage = new Image();
-foregroundImage.src = './image/foreground1.png';
+foregroundImage.src = './image/foreground.png';
 
 const playerDownImage = new Image();
 playerDownImage.src ='./image/characterd5.png';
